@@ -347,14 +347,16 @@ class SkeletonQueue(Sized):
 
     def greedily_process(self):
         num_new = 0
-        if YANG: print('1 greedily_process starting')
+        start = time.time()
         while self.is_active():
             priority, binding = self.peak_binding()
-            if not binding.is_greedy(): #priority.not_greedy:
+            if not binding.is_greedy():  # priority.not_greedy:
+                break
+            ## added by Yang for timeout
+            if time.time() - start > 3 * 60:
+                print('---\ngreedily_process timeout (3 min)\n---')
                 break
             num_new += self.process_root()
-            if YANG: print('1 greedily_process num_new', num_new)
-        if YANG: print('1 greedily_process finished', num_new)
         return num_new
 
     def process_until_new(self, print_frequency=1.):
@@ -384,6 +386,7 @@ class SkeletonQueue(Sized):
     def process_complexity(self, complexity_limit):
         # TODO: could copy the queue and filter instances that exceed complexity_limit
         num_new = 0
+        start = time.time()
         if not self.is_active():
             return num_new
         print('Sampling while complexity <= {}'.format(complexity_limit))
@@ -396,6 +399,12 @@ class SkeletonQueue(Sized):
                     if readd is True:
                         self.push_binding(binding)
                     continue
+
+            ## added by Yang for timeout
+            # print(f'///skeleton.process_complexity(), start time {round(start)} \t passed {round(time.time() - start, 2)}')
+            if time.time() - start > 3 * 60:
+                print('---\nskeleton.process_complexity timeout (3 min)\n---')
+                break
             self.standby.append(binding)
         self.readd_standby()
         return num_new + self.greedily_process()
@@ -403,6 +412,8 @@ class SkeletonQueue(Sized):
 
     def timed_process(self, max_time=INF, max_iterations=INF):
         # TODO: combine process methods into process_until
+        ## YANG's forced timeout
+        max_time = 5 * 60
 
         if YANG: print('2 timed_process starting', max_time, max_iterations)
 
@@ -415,6 +426,9 @@ class SkeletonQueue(Sized):
             if YANG: print(f'2 timed_process \t{self.is_active()} \t{elapsed_time(start_time) < max_time} \t{iterations < max_iterations}')
             iterations += 1
             num_new += self.process_root()
+            # print(f'///skeleton.timed_process(), start time {round(start_time)} \t passed {round(elapsed_time(start_time), 2)}')
+            if (elapsed_time(start_time) > max_time):
+                print('---\nskeleton.timed_process() timeout (3 min)\n---')
         #print('Iterations: {} | New: {} | Time: {:.3f}'.format(iterations, num_new, elapsed_time(start_time)))
         if YANG: print('2 timed_process finished', num_new)
         return num_new + self.greedily_process()

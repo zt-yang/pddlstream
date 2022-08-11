@@ -283,7 +283,6 @@ class StreamInstance(Instance):
         return self.history[self.num_calls]
 
     def dump_new_values(self, new_values=[]):
-        # from zzz.logging import myprint as print
         ## YANG for debugging
         if (not new_values and VERBOSE_FAILURES) or \
                 (new_values and self.info.verbose):
