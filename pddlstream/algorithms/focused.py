@@ -231,7 +231,7 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
     timeout = 20*60 ## before Apr 5
     timeout = 10*60
     timeout = 5*60  ## on Jul 26
-    timeout = 8*60  ## on Sep 8
+    # timeout = 8*60  ## on Sep 8
     start_time = time.time()
     while (not store.is_terminated()) and (num_iterations < max_iterations) and (complexity_limit <= max_complexity):
         num_iterations += 1
@@ -298,7 +298,7 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
             opt_solutions = [opt_solution for opt_solution, _ in scored_solutions]
 
         ## ICRA 2022
-        search_sample_ratio = 1
+        # search_sample_ratio = 1
 
         for i, opt_solution in enumerate(opt_solutions):
             stream_plan, opt_plan, cost = opt_solution
@@ -392,6 +392,7 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
         # YANG for debugging
         # allocated_sample_time = 20
         skeleton_queue.process(complexity_limit=complexity_limit, max_time=allocated_sample_time)
+        ## ICRA 2022
         # skeleton_queue.process(complexity_limit=-1, max_time=allocated_sample_time)
         # if skeleton_queue.process(stream_plan, opt_plan, cost, complexity_limit, allocated_sample_time) is INFEASIBLE:
         #     break
