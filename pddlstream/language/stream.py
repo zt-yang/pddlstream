@@ -123,6 +123,9 @@ class WildOutput(object):
         self.replan = replan # Reports back whether the problem has changed substantially
     def __iter__(self):
         return iter([self.values, self.facts])
+    def __str__(self):
+        return '{}{}'.format(self.__class__.__name__, tuple(self))
+    __repr__ = __str__
 
 class FluentOutput(object): # TODO: unify with OptimizerOutput
     # TODO: allow fluent streams to report the subset of facts that caused failure

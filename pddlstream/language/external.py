@@ -155,6 +155,9 @@ class Instance(object):
             self._domain = tuple(substitute_fact(atom, self.mapping)
                                  for atom in self.external.domain)
         return self._domain
+    @property
+    def num_outputs(self):
+        return len(self.results_history)
     def get_iteration(self):
         return INF if self.enumerated else self.num_calls
     def get_domain(self):
