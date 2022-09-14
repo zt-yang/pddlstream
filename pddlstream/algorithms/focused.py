@@ -294,13 +294,16 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
             scores = fc(action_plans)
             scored_solutions = list(zip(opt_solutions, scores))
             scored_solutions.sort(key=lambda item: item[1], reverse=True)
+            filtered = []
             for i, (opt_solution, score) in enumerate(scored_solutions):
                 stream_plan, opt_plan, cost = opt_solution
                 action_plan = opt_plan.action_plan
                 feasible = bool(score)
                 print(f'{i+1}/{len(scored_solutions)}) Score: {score} | Feasible: {feasible} | '
                       f'Cost: {cost} | Length: {len(action_plan)} | Plan: {action_plan}')
-            opt_solutions, _ = zip(*scored_solutions)
+                if score > 0.5:
+                    filtered.append((opt_solution, score))
+            opt_solutions, _ = zip(*filtered)
 
         ## ICRA 2022
         # search_sample_ratio = 1
