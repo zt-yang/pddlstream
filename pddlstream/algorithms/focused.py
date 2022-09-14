@@ -304,7 +304,9 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
                         filtered.append((opt_solution, score))
                         print(f'{i + 1}/{len(scored_solutions)}) Score: {score} | Feasible: {feasible} | '
                             f'Cost: {cost} | Length: {len(action_plan)} | Plan: {action_plan}')
-                opt_solutions, _ = zip(*filtered)
+                opt_solutions = []
+                if len(filtered) > 0:
+                    opt_solutions, _ = zip(*filtered)
 
         ## ICRA 2022
         # search_sample_ratio = 1
