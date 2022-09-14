@@ -280,30 +280,31 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
             if not eager_disabled:
                 reenable_disabled(evaluations, domain, disabled)
 
-        if fc is not None:
-            # scored_solutions = []
-            # for i, opt_solution in enumerate(opt_solutions):
-            #     stream_plan, opt_plan, cost = opt_solution
-            #     action_plan = opt_plan.action_plan
-            #     feasible = fc(action_plan)
-            #     if feasible:
-            #         score = feasible # TODO: could use another class method to score
-            #         print(score, action_plan)
-            #         scored_solutions.append((opt_solution, score))
-            action_plans = [opt_plan.action_plan for _, opt_plan, _ in opt_solutions]
-            scores = fc(action_plans)
-            scored_solutions = list(zip(opt_solutions, scores))
-            scored_solutions.sort(key=lambda item: item[1], reverse=True)
-            filtered = []
-            for i, (opt_solution, score) in enumerate(scored_solutions):
-                stream_plan, opt_plan, cost = opt_solution
-                action_plan = opt_plan.action_plan
-                feasible = bool(score)
-                print(f'{i+1}/{len(scored_solutions)}) Score: {score} | Feasible: {feasible} | '
-                      f'Cost: {cost} | Length: {len(action_plan)} | Plan: {action_plan}')
-                if score > 0.5:
-                    filtered.append((opt_solution, score))
-            opt_solutions, _ = zip(*filtered)
+        else:
+            if fc is not None:
+                # scored_solutions = []
+                # for i, opt_solution in enumerate(opt_solutions):
+                #     stream_plan, opt_plan, cost = opt_solution
+                #     action_plan = opt_plan.action_plan
+                #     feasible = fc(action_plan)
+                #     if feasible:
+                #         score = feasible # TODO: could use another class method to score
+                #         print(score, action_plan)
+                #         scored_solutions.append((opt_solution, score))
+                action_plans = [opt_plan.action_plan for _, opt_plan, _ in opt_solutions]
+                scores = fc(action_plans)
+                scored_solutions = list(zip(opt_solutions, scores))
+                scored_solutions.sort(key=lambda item: item[1], reverse=True)
+                filtered = []
+                for i, (opt_solution, score) in enumerate(scored_solutions):
+                    stream_plan, opt_plan, cost = opt_solution
+                    action_plan = opt_plan.action_plan
+                    feasible = bool(score)
+                    if score > 0.5:
+                        filtered.append((opt_solution, score))
+                        print(f'{i + 1}/{len(scored_solutions)}) Score: {score} | Feasible: {feasible} | '
+                            f'Cost: {cost} | Length: {len(action_plan)} | Plan: {action_plan}')
+                opt_solutions, _ = zip(*filtered)
 
         ## ICRA 2022
         # search_sample_ratio = 1
