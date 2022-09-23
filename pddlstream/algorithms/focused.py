@@ -76,6 +76,8 @@ def set_all_opt_gen_fn(externals, unique=None, verbose=True):
     # from pddlstream.language.stream import DEFAULT_UNIQUE
     # from pddlstream.algorithms.meta import set_unique
     # set_unique(externals)
+    if verbose:
+        print('focused.py : set_all_opt_gen_fn')
     for i, external in enumerate(externals):
         if isinstance(external, Stream):
             # TODO: apply only if not in stream_map?
@@ -85,7 +87,7 @@ def set_all_opt_gen_fn(externals, unique=None, verbose=True):
             #external.info = StreamInfo(opt_gen_fn=PartialInputs(unique=unique))
             external.setup_opt_gen_fns(external.info.opt_gen_fn)
         if verbose:
-            print(i, external, external.info)
+            print(i, external) ## , external.info
 
 ##################################################
 
@@ -200,7 +202,7 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
     evaluations, goal_exp, domain, externals = parse_problem(
         problem, stream_info=stream_info, constraints=constraints,
         unit_costs=unit_costs, unit_efforts=unit_efforts)
-    set_all_opt_gen_fn(externals, unique=unique_optimistic)
+    set_all_opt_gen_fn(externals, unique=unique_optimistic, verbose=True)
 
     identify_non_producers(externals)
     enforce_simultaneous(domain, externals)
@@ -361,6 +363,10 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
                 i, len(opt_solutions),
                 get_length(stream_plan), num_optimistic, compute_plan_effort(stream_plan), stream_plan_str, ## stream_plan,
                 get_length(action_plan), cost, action_plan_str))  ## , str_from_plan(action_plan)))
+
+            if visualize:
+                log_actions(stream_plan, action_plan, num_iterations)
+                # create_visualizations(evaluations, stream_plan, num_iterations)
 
             if plan_dataset is not None:
                 solution = None
