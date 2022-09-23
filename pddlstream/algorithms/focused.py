@@ -292,22 +292,30 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
                 #         print(score, action_plan)
                 #         scored_solutions.append((opt_solution, score))
                 action_plans = [opt_plan.action_plan for _, opt_plan, _ in opt_solutions]
-                opt_solutions = []
-                if len(action_plans) > 1:
-                    scores = fc(action_plans)
-                    scored_solutions = list(zip(opt_solutions, scores))
-                    scored_solutions.sort(key=lambda item: item[1], reverse=True)
-                    filtered = []
+                scores = fc(action_plans)
+                scored_solutions = list(zip(opt_solutions, scores))
+                scored_solutions.sort(key=lambda item: item[1], reverse=True)
+                filtered = []
+                for i, (opt_solution, score) in enumerate(scored_solutions):
+                    stream_plan, opt_plan, cost = opt_solution
+                    action_plan = opt_plan.action_plan
+                    feasible = bool(score)
+                    if score > 0.5:
+                        filtered.append((opt_solution, score))
+                        print(f'{i + 1}/{len(scored_solutions)}) Score: {score} | Feasible: {feasible} | '
+                            f'Cost: {cost} | Length: {len(action_plan)} | Plan: {action_plan}')
+                if len(filtered) == 0:
                     for i, (opt_solution, score) in enumerate(scored_solutions):
                         stream_plan, opt_plan, cost = opt_solution
                         action_plan = opt_plan.action_plan
                         feasible = bool(score)
-                        if score > 0.5:
+                        if score > 0.2:
                             filtered.append((opt_solution, score))
                             print(f'{i + 1}/{len(scored_solutions)}) Score: {score} | Feasible: {feasible} | '
-                                f'Cost: {cost} | Length: {len(action_plan)} | Plan: {action_plan}')
-                    if len(filtered) > 0:
-                        opt_solutions, _ = zip(*filtered)
+                                  f'Cost: {cost} | Length: {len(action_plan)} | Plan: {action_plan}')
+                opt_solutions = []
+                if len(filtered) > 0:
+                    opt_solutions, _ = zip(*filtered)
 
         ## ICRA 2022
         # search_sample_ratio = 1
