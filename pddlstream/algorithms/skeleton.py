@@ -21,7 +21,7 @@ from pddlstream.algorithms.reorder import get_object_orders
 USE_PRIORITIES = True
 GREEDY_VISITS = 0
 GREEDY_BEST = True
-REQUIRE_DOWNSTREAM = False
+REQUIRE_DOWNSTREAM = True
 
 Priority = namedtuple('Priority', ['not_greedy', 'complexity', 'visits', 'remaining', 'cost']) # TODO: FIFO
 Affected = namedtuple('Affected', ['indices', 'has_cost'])
@@ -73,6 +73,7 @@ class Skeleton(object):
                                        for fact in stream.get_domain() if fact in preimage] for stream in stream_plan]
         self.incoming_indices = incoming_from_edges(index_orders)
         self.outgoing_indices = outgoing_from_edges(index_orders)
+        self.standby = []
 
         #min_complexity = stream_plan_complexity(self.queue.evaluations, self.stream_plan, [0]*len(stream_plan))
         # TODO: compute this all at once via hashing
@@ -200,7 +201,7 @@ class Binding(object):
         # TODO: discard bindings that have been pruned by their cost per affected component
         # TODO: both any and all weakly prune
         return any(binding.check_downstream_helper(affected) for binding in self.children)
-    def check_downstream(self):
+    def check_downstream(self): # TODO: move to skeleton?
         return self.check_downstream_helper(self.skeleton.affected_indices[self.index])
     def get_priority(self):
         if not USE_PRIORITIES:
@@ -306,6 +307,7 @@ class SkeletonQueue(Sized):
         return skeleton
 
     def readd_standby(self):
+        # TODO: use skeleton.standby instead
         for binding in self.standby:
             self.push_binding(binding)
         self.standby = []
@@ -429,9 +431,19 @@ class SkeletonQueue(Sized):
         while self.is_active() and (elapsed_time(start_time) < max_time) and (iterations < max_iterations):
             if YANG: print(f'2 timed_process \t{self.is_active()} \t{elapsed_time(start_time) < max_time} \t{iterations < max_iterations}')
             iterations += 1
-            num_new += self.process_root()
+            #num_new += self.process_root()
+            _, binding = self.pop_binding()
+            readd, is_new = self._process_binding(binding)
+            if readd is True:
+                self.push_binding(binding)
+            elif readd is STANDBY:
+                self.standby.append(binding)
+            num_new += is_new
+            if is_new: # TODO: only on a new binding milestone
+                self.readd_standby()
         #print('Iterations: {} | New: {} | Time: {:.3f}'.format(iterations, num_new, elapsed_time(start_time)))
         if YANG: print('2 timed_process finished', num_new)
+        self.readd_standby()
         return num_new + self.greedily_process()
 
     #########################

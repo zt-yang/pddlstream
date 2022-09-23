@@ -98,20 +98,23 @@ def set_all_opt_gen_fn(externals, unique=None, verbose=True):
 #     def add_plan(self, ):
 #         pass
 
-def satisfy_optimistic_plan(store, domain, opt_solution, use_feedback=False, use_contexts=False, max_time=10):
+def satisfy_optimistic_plan(store, domain, opt_solutions, use_feedback=False, use_contexts=False, max_time=10):
     # TODO: create a new store
     # TODO: could pass domain=None
     # TODO: reuse instantiation
-    stream_plan, opt_plan, cost = opt_solution
-    if not is_plan(opt_plan):
+    #stream_plan, opt_plan, cost = opt_solution
+    #if not is_plan(opt_plan):
+    #    return None
+    if not opt_solutions:
         return None
-    externals = {result.external for result in stream_plan}
+    externals = {result.external for stream_plan, _, _ in opt_solutions for result in stream_plan}
     for external in externals:
         external.get_complexity = lambda num_calls: 0
 
     store.solutions = []
     skeleton_queue = SkeletonQueue(store, domain, disable=use_feedback, use_contexts=use_contexts)
-    skeleton_queue.new_skeleton(stream_plan, opt_plan, cost)
+    for stream_plan, opt_plan, cost in opt_solutions:
+        skeleton_queue.new_skeleton(stream_plan, opt_plan, cost)
     skeleton_queue.process(complexity_limit=-1, max_time=max_time)
     skeleton_queue.greedily_process()
     #plan = store.best_plan
@@ -233,6 +236,7 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
     timeout = 20*60 ## before Apr 5
     timeout = 10*60
     timeout = 5*60  ## on Jul 26
+    # timeout = 8*60  ## on Sep 8
     start_time = time.time()
     while (not store.is_terminated()) and (num_iterations < max_iterations) and (complexity_limit <= max_complexity):
         num_iterations += 1
@@ -264,6 +268,9 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
             for axiom in disabled_axioms:
                 domain.axioms.remove(axiom)
 
+        # TODO: sample-pose ahead of sample-grasp
+        #print(opt_solutions, not eager_instantiator, not skeleton_queue, not disabled, len(skeleton_queue))
+        #print(skeleton_queue.queue)
         if opt_solutions is INFEASIBLE:
             opt_solutions = []
             if (not eager_instantiator) and (not skeleton_queue) and (not disabled):
@@ -275,19 +282,37 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
             if not eager_disabled:
                 reenable_disabled(evaluations, domain, disabled)
 
-        if fc is not None:
-            scored_solutions = []
-            for i, opt_solution in enumerate(opt_solutions):
-                stream_plan, opt_plan, cost = opt_solution
-                action_plan = opt_plan.action_plan
-                feasible = fc(action_plan)
-                if feasible:
-                    score = feasible # TODO: could use another class method to score
-                    scored_solutions.append((opt_solution, score))
-            scored_solutions.sort(key=lambda item: item[1], reverse=True)
-            opt_solutions = [opt_solution for opt_solution, _ in scored_solutions]
+        else:
+            if fc is not None:
+                # scored_solutions = []
+                # for i, opt_solution in enumerate(opt_solutions):
+                #     stream_plan, opt_plan, cost = opt_solution
+                #     action_plan = opt_plan.action_plan
+                #     feasible = fc(action_plan)
+                #     if feasible:
+                #         score = feasible # TODO: could use another class method to score
+                #         print(score, action_plan)
+                #         scored_solutions.append((opt_solution, score))
+                action_plans = [opt_plan.action_plan for _, opt_plan, _ in opt_solutions]
+                scores = fc(action_plans)
+                scored_solutions = list(zip(opt_solutions, scores))
+                scored_solutions.sort(key=lambda item: item[1], reverse=True)
+                filtered = []
+                for i, (opt_solution, score) in enumerate(scored_solutions):
+                    stream_plan, opt_plan, cost = opt_solution
+                    action_plan = opt_plan.action_plan
+                    feasible = bool(score)
+                    if score > 0.5:
+                        filtered.append((opt_solution, score))
+                        print(f'{i + 1}/{len(scored_solutions)}) Score: {score} | Feasible: {feasible} | '
+                            f'Cost: {cost} | Length: {len(action_plan)} | Plan: {action_plan}')
+                opt_solutions = []
+                if len(filtered) > 0:
+                    opt_solutions, _ = zip(*filtered)
 
-        # TODO: batch together multiple plans
+        ## ICRA 2022
+        # search_sample_ratio = 1
+
         for i, opt_solution in enumerate(opt_solutions):
             stream_plan, opt_plan, cost = opt_solution
             #stream_plan = replan_with_optimizers(evaluations, stream_plan, domain, externals) or stream_plan
@@ -337,15 +362,26 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
             if plan_dataset is not None:
                 solution = None
                 if evaluation_time is not None:
-                    solution = satisfy_optimistic_plan(store, domain, opt_solution, max_time=evaluation_time)
+                    solution = satisfy_optimistic_plan(store, domain, opt_solutions=[opt_solution], max_time=evaluation_time)
                 plan_dataset.append((opt_solution, solution))
                 num_plans = len(plan_dataset)
                 num_solutions = sum((soln is not None) and is_plan(soln[0]) for _, soln in plan_dataset)
                 print(f'Plans: {num_plans} | Solutions: {num_plans}')
-                if num_solutions >= max_solutions:
+                if (solution is not None) and num_solutions >= max_solutions:
                     #write_stream_statistics(externals, verbose=True)
-                    return store.extract_solution() # TODO: return plan_dataset
+                    #return store.extract_solution() # TODO: return plan_dataset
+                    return solution
                 continue
+
+            ## TODO: check plan feasibility here
+            if fc is not None:
+                if not fc(action_plan):
+                    complexity_limit += complexity_step
+                    print('Skip planning according to', fc.__class__.__name__)
+                    continue
+            if visualize:
+                log_actions(stream_plan, action_plan, num_iterations)
+                # create_visualizations(evaluations, stream_plan, num_iterations)
 
             ################
 
@@ -373,6 +409,8 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
         # YANG for debugging
         # allocated_sample_time = 20
         skeleton_queue.process(complexity_limit=complexity_limit, max_time=allocated_sample_time)
+        ## ICRA 2022
+        # skeleton_queue.process(complexity_limit=-1, max_time=allocated_sample_time)
         # if skeleton_queue.process(stream_plan, opt_plan, cost, complexity_limit, allocated_sample_time) is INFEASIBLE:
         #     break
 
