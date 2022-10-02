@@ -321,6 +321,8 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
 
         ## ICRA 2022
         # search_sample_ratio = 1
+        if evaluation_time < 0:
+            return None
 
         for i, opt_solution in enumerate(opt_solutions):
             stream_plan, opt_plan, cost = opt_solution

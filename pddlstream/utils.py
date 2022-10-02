@@ -310,7 +310,9 @@ class TmpCWD(Saver):
     def __init__(self, temp_cwd):
         self.tmp_cwd = temp_cwd
     def save(self):
-        self.old_cwd = os.getcwd()
+        # self.old_cwd = os.getcwd()
+        import psutil
+        self.old_cwd = psutil.Process(os.getpid()).cwd()
         os.chdir(self.tmp_cwd)
     def restore(self):
         os.chdir(self.old_cwd)
