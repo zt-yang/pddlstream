@@ -84,6 +84,7 @@ def log_failed_streams(name, args):
         from pybullet_tools.logging import dump_json
         dump_json(plan_log, json_file, sort_dicts=False)
 
+
 def log_actions(stream_plan, action_plan, iteration):
     if not VISUALIZE: return
     json_file, plans = load_plan_log()
