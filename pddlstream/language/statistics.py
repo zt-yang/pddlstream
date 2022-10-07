@@ -21,7 +21,6 @@ Stats = namedtuple('Stats', ['p_success', 'overhead'])
 TXT_FILE = os.path.abspath('txt_file.txt')
 
 def myprint(text='', *kwargs):
-    # from pybullet_tools.logging import myprint as print
     string = [str(text)]
     if len(kwargs) > 0:
         print(text, kwargs)

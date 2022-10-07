@@ -212,10 +212,11 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
     #     effort_weight = 1
 
     # load_stream_statistics(externals)
+    log_plan = visualize
     if visualize and not has_pygraphviz():
         visualize = False
         print('\n\n\n\nWarning, visualize=True requires pygraphviz. Setting visualize=False\n\n\n\n')
-    if visualize:
+    if log_plan:
         reset_visualizations()
     else:
         set_visualizations_false()
@@ -366,9 +367,8 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
                 get_length(stream_plan), num_optimistic, compute_plan_effort(stream_plan), stream_plan_str, ## stream_plan,
                 get_length(action_plan), cost, action_plan_str))  ## , str_from_plan(action_plan)))
 
-            if visualize:
-                log_actions(stream_plan, action_plan, num_iterations)
-                # create_visualizations(evaluations, stream_plan, num_iterations)
+            # if visualize:
+            #     create_visualizations(evaluations, stream_plan, num_iterations)
 
             if plan_dataset is not None:
                 solution = None
@@ -390,7 +390,7 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
                     complexity_limit += complexity_step
                     print('Skip planning according to', fc.__class__.__name__)
                     continue
-            if visualize:
+            if log_plan:
                 log_actions(stream_plan, action_plan, num_iterations)
                 # create_visualizations(evaluations, stream_plan, num_iterations)
 
