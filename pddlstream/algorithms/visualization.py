@@ -32,6 +32,7 @@ COMPLEXITY_ITERATION_TEMPLATE = '{}_{}' + DEFAULT_EXTENSION
 
 ##################################################
 
+
 def has_pygraphviz():
     # TODO: networkx
     # https://github.com/caelan/pddlstream/blob/82ee5e363585d0af8ff9532ecc14641687d5b56b/examples/fault_tolerant/data_network/run.py#L189
@@ -49,6 +50,7 @@ def reset_visualizations():
     clear_dir(VISUALIZATIONS_DIR)
     ensure_dir(CONSTRAINT_NETWORK_DIR)
     ensure_dir(STREAM_PLAN_DIR)
+
 
 VISUALIZE = True
 def set_visualizations_false():
@@ -83,6 +85,7 @@ def log_failed_streams(name, args):
 
         from pybullet_tools.logging import dump_json
         dump_json(plan_log, json_file, sort_dicts=False)
+
 
 def log_actions(stream_plan, action_plan, iteration):
     if not VISUALIZE: return
