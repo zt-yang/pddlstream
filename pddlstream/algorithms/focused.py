@@ -239,6 +239,9 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
     timeout = 5*60  ## on Jul 26
     # timeout = 8*60  ## on Sep 8
     start_time = time.time()
+    debug_label = 'focused |'
+    num_solutions = None
+    from pybullet_tools.logging import myprint as print
     while (not store.is_terminated()) and (num_iterations < max_iterations) and (complexity_limit <= max_complexity):
         num_iterations += 1
         eager_instantiator = Instantiator(eager_externals, evaluations) # Only update after an increase?
@@ -275,6 +278,7 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
         if opt_solutions is INFEASIBLE:
             opt_solutions = []
             if (not eager_instantiator) and (not skeleton_queue) and (not disabled):
+                print(debug_label, 'opt_solutions is INFEASIBLE')
                 break
 
         if not opt_solutions:
@@ -323,6 +327,7 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
         ## ICRA 2022
         # search_sample_ratio = 1
         if evaluation_time < 0:
+            print(debug_label, 'evaluation_time < 0')
             return None
 
         for i, opt_solution in enumerate(opt_solutions):
@@ -378,17 +383,22 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
                 num_plans = len(plan_dataset)
                 num_solutions = sum((soln is not None) and is_plan(soln[0]) for _, soln in plan_dataset)
                 print(f'Plans: {num_plans} | Solutions: {num_plans}')
-                if (solution is not None) and num_solutions >= max_solutions:
-                    #write_stream_statistics(externals, verbose=True)
-                    #return store.extract_solution() # TODO: return plan_dataset
-                    return solution
+                if solution is not None and is_plan(solution):
+                    print(f'\n\n----------------------------------------\n\n')
+                    print(debug_label, f'Solution ({num_solutions}), {max_solutions - num_solutions} solutions to go')
+                    print(f'\n\n----------------------------------------\n\n')
+                    if num_solutions >= max_solutions:
+                        #write_stream_statistics(externals, verbose=True)
+                        #return store.extract_solution() # TODO: return plan_dataset
+                        print(debug_label, '!!! num_solutions >= max_solutions !!!')
+                        return solution
                 continue
 
             ## TODO: check plan feasibility here
             if fc is not None:
                 if not fc(action_plan):
                     complexity_limit += complexity_step
-                    print('Skip planning according to', fc.__class__.__name__)
+                    print(debug_label, 'Skip planning according to', fc.__class__.__name__)
                     continue
             if log_plan:
                 log_actions(stream_plan, action_plan, num_iterations)
@@ -429,7 +439,11 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
         if (time.time() - start_time > timeout):
             print('\n\n--------- TIMEOUT --------\n\n')
             break
-
+        print('(not store.is_terminated())', (not store.is_terminated()))
+        print('(num_iterations < max_iterations)', (num_iterations < max_iterations))
+        print('(complexity_limit <= max_complexity)', (complexity_limit <= max_complexity))
+        print('plan_dataset', plan_dataset is not None)
+        print('num_solutions', num_solutions)
     ################
 
     summary = store.export_summary()
