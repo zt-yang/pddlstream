@@ -69,7 +69,7 @@ def check_dominated(skeleton_queue, stream_plan):
             print(skeleton.stream_plan)
     raise NotImplementedError()
 
-def set_all_opt_gen_fn(externals, unique=None, verbose=True):
+def set_all_opt_gen_fn(externals, unique=None, verbose=False):
     # TODO: move to parse_problem?
     if unique is None:
         return
@@ -142,6 +142,7 @@ def satisfy_optimistic_plan(store, domain, opt_solutions, use_feedback=False, us
 
 ##################################################
 
+
 def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
                    unique_optimistic=None, use_feedback=True, replan_actions=set(),
                    unit_costs=False, success_cost=INF,
@@ -150,8 +151,8 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
                    max_skeletons=INF, search_sample_ratio=0, bind=True, max_failures=0,
                    unit_efforts=False, max_effort=INF, effort_weight=None, reorder=True,
                    visualize=False, verbose=True,
-                   fc=None, plan_dataset=None, evaluation_time=30, max_solutions=1,
-                   **search_kwargs):
+                   fc=None, domain_modifier=None,
+                   plan_dataset=None, evaluation_time=30, max_solutions=1, **search_kwargs):
     """
     Solves a PDDLStream problem by first planning with optimistic stream outputs and then querying streams
     :param problem: a PDDLStream problem
@@ -202,7 +203,9 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
     evaluations, goal_exp, domain, externals = parse_problem(
         problem, stream_info=stream_info, constraints=constraints,
         unit_costs=unit_costs, unit_efforts=unit_efforts)
-    set_all_opt_gen_fn(externals, unique=unique_optimistic, verbose=True)
+    if domain_modifier is not None:
+        domain = domain_modifier(domain)
+    set_all_opt_gen_fn(externals, unique=unique_optimistic, verbose=False)
 
     identify_non_producers(externals)
     enforce_simultaneous(domain, externals)
@@ -428,6 +431,7 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
             if len(skeleton_queue.skeletons) <= max_skeletons else INF
 
         # YANG for debugging
+        # print('\n\n!! allocated_sample_time', allocated_sample_time, 20, '\n\n')
         # allocated_sample_time = 20
         skeleton_queue.process(complexity_limit=complexity_limit, max_time=allocated_sample_time)
         ## ICRA 2022
@@ -439,11 +443,11 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
         if (time.time() - start_time > timeout):
             print('\n\n--------- TIMEOUT --------\n\n')
             break
-        print('(not store.is_terminated())', (not store.is_terminated()))
-        print('(num_iterations < max_iterations)', (num_iterations < max_iterations))
-        print('(complexity_limit <= max_complexity)', (complexity_limit <= max_complexity))
-        print('plan_dataset', plan_dataset is not None)
-        print('num_solutions', num_solutions)
+        # print('(not store.is_terminated())', (not store.is_terminated()))
+        # print('(num_iterations < max_iterations)', (num_iterations < max_iterations))
+        # print('(complexity_limit <= max_complexity)', (complexity_limit <= max_complexity))
+        # print('plan_dataset', plan_dataset is not None)
+        # print('num_solutions', num_solutions)
     ################
 
     summary = store.export_summary()
