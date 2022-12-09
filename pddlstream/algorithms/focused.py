@@ -193,6 +193,8 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
     # TODO: locally optimize only after a solution is identified
     # TODO: replan with a better search algorithm after feasible
     # TODO: change the search algorithm and unit costs based on the best cost
+    from pybullet_tools.logging import myprint as print
+
     use_skeletons = (max_skeletons is not None)
     #assert implies(use_skeletons, search_sample_ratio > 0)
     eager_disabled = (effort_weight is None)  # No point if no stream effort biasing
@@ -241,7 +243,6 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
     start_time = time.time()
     debug_label = 'focused |'
     num_solutions = None
-    from pybullet_tools.logging import myprint as print
     while (not store.is_terminated()) and (num_iterations < max_iterations) and (complexity_limit <= max_complexity):
         num_iterations += 1
         eager_instantiator = Instantiator(eager_externals, evaluations) # Only update after an increase?
