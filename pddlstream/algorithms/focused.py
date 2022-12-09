@@ -386,7 +386,7 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
                 num_plans = len(plan_dataset)
                 num_solutions = sum((soln is not None) and is_plan(soln[0]) for _, soln in plan_dataset)
                 print(f'Plans: {num_plans} | Solutions: {num_plans}')
-                if solution is not None and is_plan(solution):
+                if solution is not None and is_plan(solution[0]):
                     print(f'\n\n----------------------------------------\n\n')
                     print(debug_label, f'Solution ({num_solutions}), {max_solutions - num_solutions} solutions to go')
                     print(f'\n\n----------------------------------------\n\n')
