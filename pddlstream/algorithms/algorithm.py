@@ -38,6 +38,7 @@ def parse_constants(domain, constant_map):
     del domain.constants[:] # So not set twice
     return obj_from_constant
 
+
 def check_problem(domain, streams, obj_from_constant):
     for action in (domain.actions + domain.axioms):
         for p, c in Counter(action.parameters).items():
