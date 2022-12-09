@@ -439,11 +439,11 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
         if (time.time() - start_time > timeout):
             print('\n\n--------- TIMEOUT --------\n\n')
             break
-        print('(not store.is_terminated())', (not store.is_terminated()))
-        print('(num_iterations < max_iterations)', (num_iterations < max_iterations))
-        print('(complexity_limit <= max_complexity)', (complexity_limit <= max_complexity))
-        print('plan_dataset', plan_dataset is not None)
-        print('num_solutions', num_solutions)
+        # print('(not store.is_terminated())', (not store.is_terminated()))
+        # print('(num_iterations < max_iterations)', (num_iterations < max_iterations))
+        # print('(complexity_limit <= max_complexity)', (complexity_limit <= max_complexity))
+        # print('plan_dataset', plan_dataset is not None)
+        # print('num_solutions', num_solutions)
     ################
 
     summary = store.export_summary()
