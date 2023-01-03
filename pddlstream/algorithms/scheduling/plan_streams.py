@@ -118,9 +118,12 @@ def recover_partial_orders(stream_plan, node_from_atom):
     for child in stream_plan:
         # TODO: account for fluent objects
         for fact in child.get_domain():
-            parent = node_from_atom[fact].result
-            if parent is not None:
-                partial_orders.add((parent, child))
+            if fact in node_from_atom:  ## YANG: may be optimistic poses
+                parent = node_from_atom[fact].result
+                if parent is not None:
+                    partial_orders.add((parent, child))
+            else:
+                print('Warning: missing fact', fact)
     #stream_plan = topological_sort(stream_plan, partial_orders)
     return partial_orders
 

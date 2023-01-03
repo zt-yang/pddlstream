@@ -73,6 +73,22 @@ def load_plan_log():
     return json_file, plans
 
 
+def get_failure_summary(streams):
+    summary = {}
+    for stream in streams:
+        name, args = stream['name'], stream['args']
+        key = [name, args[0]]
+        if len(args) >= 3 and args[1] in ['left']:
+            key.append(args[2])
+        elif len(args) >= 2:
+            key.append(args[1])
+        key = f"({', '.join(key)})"
+        if key not in summary:
+            summary[key] = 0
+        summary[key] += 1
+    return summary
+
+
 def log_failed_streams(name, args):
     if not VISUALIZE: return
     json_file, plan_log = load_plan_log()
@@ -81,6 +97,10 @@ def log_failed_streams(name, args):
         streams.append({
             'name': name, 'args': [str(n) for n in args]
         })
+        if len(streams) > 0:
+            streams[0] = get_failure_summary(streams[1:])
+        else:
+            streams.insert(0, get_failure_summary(streams))
         plan_log[-1] = streams
 
         from pybullet_tools.logging import dump_json
@@ -90,6 +110,12 @@ def log_failed_streams(name, args):
 def log_actions(stream_plan, action_plan, iteration):
     if not VISUALIZE: return
     json_file, plans = load_plan_log()
+
+    if len(plans) > 0:
+        plans[-1] = {
+            'summary': plans[-1][0],
+            'failed': plans[-1][1:]
+        }
 
     actions = []
     for a in action_plan:

@@ -243,6 +243,7 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
     timeout = 10*60
     timeout = 5*60  ## on Jul 26
     # timeout = 8*60  ## on Sep 8
+    timeout = 3*60  ## on Sep 8
     start_time = time.time()
     debug_label = 'focused |'
     num_solutions = None
@@ -376,6 +377,8 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
                 get_length(stream_plan), num_optimistic, compute_plan_effort(stream_plan), stream_plan_str, ## stream_plan,
                 get_length(action_plan), cost, action_plan_str))  ## , str_from_plan(action_plan)))
 
+            if log_plan:
+                log_actions(stream_plan, action_plan, num_iterations)
             # if visualize:
             #     create_visualizations(evaluations, stream_plan, num_iterations)
 
@@ -404,9 +407,6 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
                     complexity_limit += complexity_step
                     print(debug_label, 'Skip planning according to', fc.__class__.__name__)
                     continue
-            if log_plan:
-                log_actions(stream_plan, action_plan, num_iterations)
-                # create_visualizations(evaluations, stream_plan, num_iterations)
 
             ################
 
