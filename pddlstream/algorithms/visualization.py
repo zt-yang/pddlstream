@@ -39,6 +39,7 @@ def has_pygraphviz():
     #import networkx
     #import graphviz
     #import pydot
+    ## sudo apt-get install graphviz graphviz-dev; pip install pygraphviz
     try:
         import pygraphviz
     except ImportError:
