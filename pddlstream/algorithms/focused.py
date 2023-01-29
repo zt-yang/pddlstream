@@ -311,20 +311,22 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
                 for i, (opt_solution, score) in enumerate(scored_solutions):
                     stream_plan, opt_plan, cost = opt_solution
                     action_plan = opt_plan.action_plan
-                    feasible = bool(score)
-                    if score > 0.5:
-                        filtered.append((opt_solution, score))
-                        print(f'{i + 1}/{len(scored_solutions)}) Score: {score} | Feasible: {feasible} | '
-                            f'Cost: {cost} | Length: {len(action_plan)} | Plan: {action_plan}')
+                    if not isinstance(score, str):
+                        feasible = bool(score)
+                        if score > 0.5:
+                            filtered.append((opt_solution, score))
+                            print(f'{i + 1}/{len(scored_solutions)}) Score: {score} | Feasible: {feasible} | '
+                                f'Cost: {cost} | Length: {len(action_plan)} | Plan: {action_plan}')
                 if len(filtered) <= 1:
                     for i, (opt_solution, score) in enumerate(scored_solutions):
                         stream_plan, opt_plan, cost = opt_solution
                         action_plan = opt_plan.action_plan
-                        feasible = bool(score)
-                        if score > 0.25:
-                            filtered.append((opt_solution, score))
-                            print(f'{i + 1}/{len(scored_solutions)}) Score: {score} | Feasible: {feasible} | '
-                                  f'Cost: {cost} | Length: {len(action_plan)} | Plan: {action_plan}')
+                        if not isinstance(score, str):
+                            feasible = bool(score)
+                            if score > 0.25:
+                                filtered.append((opt_solution, score))
+                                print(f'{i + 1}/{len(scored_solutions)}) Score: {score} | Feasible: {feasible} | '
+                                      f'Cost: {cost} | Length: {len(action_plan)} | Plan: {action_plan}')
                 opt_solutions = []
                 if len(filtered) > 0:
                     opt_solutions, _ = zip(*filtered)
