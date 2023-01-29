@@ -306,6 +306,7 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
                 action_plans = [opt_plan.action_plan for _, opt_plan, _ in opt_solutions]
                 scores = fc(action_plans)
                 scored_solutions = list(zip(opt_solutions, scores))
+                scored_solutions = [m for m in scored_solutions if m[1] is not 'skip']
                 scored_solutions.sort(key=lambda item: item[1], reverse=True)
                 filtered = []
                 for i, (opt_solution, score) in enumerate(scored_solutions):
