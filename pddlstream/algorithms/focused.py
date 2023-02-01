@@ -244,6 +244,7 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
     timeout = 5*60  ## on Jul 26
     # timeout = 8*60  ## on Sep 8
     timeout = 3*60  ## on Sep 8
+    timeout = 6*60  ## on Jan 31
     start_time = time.time()
     debug_label = 'focused |'
     num_solutions = None
@@ -266,6 +267,8 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
                                                       replan_actions=replan_actions, reachieve=use_skeletons,
                                                       max_cost=min(store.best_cost, constraints.max_cost),
                                                       max_effort=max_effort, effort_weight=effort_weight, **search_kwargs)
+
+        start_diverse = time.time()
         # TODO: just set unit effort for each stream beforehand
         opt_solutions = INFEASIBLE
         if (max_skeletons is None) or (len(skeleton_queue.skeletons) < max_skeletons):
@@ -276,6 +279,8 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
                 optimistic_solve_fn, complexity_limit, max_effort=max_effort)
             for axiom in disabled_axioms:
                 domain.axioms.remove(axiom)
+        print('\nCount Diverse Time: {:.3f}'.format(time.time() - start_diverse))
+        print(f'\nCount Diverse Plans: {len(opt_solutions)}')
 
         # TODO: sample-pose ahead of sample-grasp
         #print(opt_solutions, not eager_instantiator, not skeleton_queue, not disabled, len(skeleton_queue))
@@ -314,7 +319,7 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
                     action_plan = opt_plan.action_plan
                     if not isinstance(score, str):
                         feasible = bool(score)
-                        if score > 0.5:
+                        if score > 0.5 and (opt_solution, score) not in filtered:
                             filtered.append((opt_solution, score))
                             print(f'{i + 1}/{len(scored_solutions)}) Score: {score} | Feasible: {feasible} | '
                                 f'Cost: {cost} | Length: {len(action_plan)} | Plan: {action_plan}')
@@ -324,7 +329,7 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
                         action_plan = opt_plan.action_plan
                         if not isinstance(score, str):
                             feasible = bool(score)
-                            if score > 0.25:
+                            if score > 0.0001 and (opt_solution, score) not in filtered:
                                 filtered.append((opt_solution, score))
                                 print(f'{i + 1}/{len(scored_solutions)}) Score: {score} | Feasible: {feasible} | '
                                       f'Cost: {cost} | Length: {len(action_plan)} | Plan: {action_plan}')
