@@ -215,16 +215,17 @@ def iterative_plan_streams(all_evaluations, externals, optimistic_solve_fn, comp
     num_iterations = 0
     timeout = 2 * 60
     timeout = 5 * 60
-    # last_result = None
+    last_result = None
     while True:
         num_iterations += 1
         results, exhausted = optimistic_process_streams(complexity_evals, externals, complexity_limit, **effort_args)
+
         # summarize_results(results, complexity_limit, num_iterations)  ## added by Yang
         # if last_result == len(results):
         #     last_result = len(results)
         #     print('num_iterations', num_iterations, len(results))
         #     continue
-        # last_result = len(results)
+        last_result = len(results)
 
         opt_solutions, final_depth = hierarchical_plan_streams(
             complexity_evals, externals, results, optimistic_solve_fn, complexity_limit,

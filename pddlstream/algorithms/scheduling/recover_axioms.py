@@ -106,6 +106,7 @@ def extraction_helper(state, instantiated_axioms, goals, negative_from_name={}, 
             helpful_axioms.append(axiom)
             init_atom = axiom.effect.negate()
             if init_atom in axiom_init:
+                continue
                 raise RuntimeError('Bug introduced by new "downward" where both the positive and negative atoms '
                                    'of literal {} are in the initial state'.format(init_atom.positive()))
             axiom_init.add(init_atom)
