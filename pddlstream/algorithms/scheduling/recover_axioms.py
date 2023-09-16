@@ -66,13 +66,13 @@ def instantiate_necessary_axioms(model, static_facts, fluent_facts, axiom_remap=
 
 ##################################################
 
-def extract_axioms(state, axiom_from_atom, conditions, axiom_plan, negated_from_name={}):
+def extract_axioms(state, axiom_from_atom, conditions, axiom_plan, negated_from_name={}, verbose=True):
     success = True
     for fact in filter_negated(conditions, negated_from_name):
         if literal_holds(state, fact):
             continue
         if fact not in axiom_from_atom:
-            print('Fact is not achievable:', fact)
+            if verbose: print('Fact is not achievable:', fact)
             success = False
             continue
         axiom = axiom_from_atom[fact]
@@ -93,7 +93,7 @@ def is_useful_atom(atom, conditions_from_predicate):
             return True
     return False
 
-def extraction_helper(state, instantiated_axioms, goals, negative_from_name={}):
+def extraction_helper(state, instantiated_axioms, goals, negative_from_name={}, verbose=False):
     # TODO: filter instantiated_axioms that aren't applicable?
     import options
     with Verbose(False):
@@ -106,6 +106,7 @@ def extraction_helper(state, instantiated_axioms, goals, negative_from_name={}):
             helpful_axioms.append(axiom)
             init_atom = axiom.effect.negate()
             if init_atom in axiom_init:
+                continue
                 raise RuntimeError('Bug introduced by new "downward" where both the positive and negative atoms '
                                    'of literal {} are in the initial state'.format(init_atom.positive()))
             axiom_init.add(init_atom)
@@ -118,8 +119,8 @@ def extraction_helper(state, instantiated_axioms, goals, negative_from_name={}):
     goal_action = pddl.PropositionalAction(GOAL_NAME, goals, [], None)
     axiom_from_atom, _ = get_achieving_axioms(state | axiom_init, helpful_axioms + [goal_action], negative_from_name)
     axiom_plan = []  # Could always add all conditions
-    success = extract_axioms(state | axiom_init, axiom_from_atom, goals, axiom_plan, negative_from_name)
-    if not success:
+    success = extract_axioms(state | axiom_init, axiom_from_atom, goals, axiom_plan, negative_from_name, verbose=verbose)
+    if not success and verbose:
         print('Warning! Could not extract an axiom plan')
         #return None
     return axiom_plan

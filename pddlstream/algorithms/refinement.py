@@ -223,13 +223,12 @@ def iterative_plan_streams(all_evaluations, externals, optimistic_solve_fn, comp
         results, exhausted = optimistic_process_streams(complexity_evals, externals, complexity_limit, **effort_args)
 
         ## ----------- added by Yang to see optimistic streams -----------
-        # summarize_results(results, complexity_limit, num_iterations)
-        if last_result == len(results):
-            last_result = len(results)
-            print('num_iterations', num_iterations, len(results))
-            continue
+        # summarize_results(results, complexity_limit, num_iterations)  ## added by Yang
+        # if last_result == len(results):
+        #     last_result = len(results)
+        #     print('num_iterations', num_iterations, len(results))
+        #     continue
         last_result = len(results)
-        ## ---------------------------------------------------------------
 
         opt_solutions, final_depth = hierarchical_plan_streams(
             complexity_evals, externals, results, optimistic_solve_fn, complexity_limit,
