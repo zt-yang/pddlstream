@@ -96,9 +96,10 @@ def diverse_from_task(sas_task, prohibit_actions=True, prohibit_predicates=[],
                 cost = sum(cost_from_action[action] for action in sas_plan)
                 plans.append((plan, cost))
                 forbid_plan(plan)
-                print('Plan: {} | Cost: {} | Length: {} | Runtime: {:.3f} | Remaining: {:.3f}\nActions: {}'.format(
+                print_plan = str_from_plan([action for action in plan if action.name != 'move_base'])
+                print('Plan: {} | Cost: {} | Length: {} | Runtime: {:.3f} | Remaining: {:.3f}\nActions: {}\n'.format(
                         len(plans), cost, len(plan), elapsed_time(start_time), max_planner_time - elapsed_time(start_time),
-                    str_from_plan(plan)))
+                    print_plan))
             if len(plan) == 0:
                 break
 
