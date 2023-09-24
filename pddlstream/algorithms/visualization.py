@@ -48,9 +48,13 @@ def has_pygraphviz():
 
 
 def reset_visualizations():
-    clear_dir(VISUALIZATIONS_DIR)
+    # clear_dir(VISUALIZATIONS_DIR)
     ensure_dir(CONSTRAINT_NETWORK_DIR)
     ensure_dir(STREAM_PLAN_DIR)
+    from os.path import join, isfile
+    log_json_file = join(VISUALIZATIONS_DIR, 'log.json')
+    if isfile(log_json_file):
+        os.remove(log_json_file)
 
 
 VISUALIZE = True

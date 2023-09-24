@@ -127,6 +127,35 @@ def recover_partial_orders(stream_plan, node_from_atom):
     #stream_plan = topological_sort(stream_plan, partial_orders)
     return partial_orders
 
+
+def extract_facts(last_from_fact, fact_from_evaluation, curr_evaluations, action_plan=None):
+    """ YANG modified for hierarchical planning because atraj objects can't be matched, 230918 """
+    mapped_evaluations = set(map(fact_from_evaluation, curr_evaluations))
+
+    last_from_fact_kin = {k: v for k, v in last_from_fact.items() if k[0] == 'kin'}
+    mapped_evaluations_kin = {k for k in mapped_evaluations if k[0] == 'kin'}
+    difference = (set(last_from_fact) - set(last_from_fact_kin)) - (mapped_evaluations - set(mapped_evaluations_kin))
+
+    for fact, step in last_from_fact_kin.items():
+        matched = False
+        for evaluation in mapped_evaluations_kin:
+            if fact[:-1] == evaluation[:-1]:
+                matched = True
+                last_from_fact.pop(fact)
+                last_from_fact[evaluation] = step
+                if action_plan is not None:
+                    for action in action_plan:
+                        if list(action.var_mapping.values())[-1] == str(fact[-1]):
+                            action = None ##[action_from_name[name if RENAME_ACTIONS else '({} {})'.format(name, ' '.join(args))]
+                             ## for name, args in renamed_plan]
+        if not matched:
+            difference.add(fact)
+    original_extraction_facts = set(last_from_fact) - set(map(fact_from_evaluation, curr_evaluations))
+    print('\n\noriginal_extraction_facts', len(original_extraction_facts))
+    print('difference', len(difference), '\n')
+    return difference
+
+
 def recover_stream_plan(evaluations, current_plan, opt_evaluations, goal_expression, domain, node_from_atom,
                         action_plan, axiom_plans, negative, replan_step):
     # Universally quantified conditions are converted into negative axioms
@@ -174,6 +203,7 @@ def recover_stream_plan(evaluations, current_plan, opt_evaluations, goal_express
 
     curr_evaluations = evaluations_from_stream_plan(evaluations, stream_plan, max_effort=None)
     extraction_facts = set(last_from_fact) - set(map(fact_from_evaluation, curr_evaluations))
+    # extraction_facts = extract_facts(last_from_fact, fact_from_evaluation, curr_evaluations, action_plan=action_plan)
     extract_stream_plan(node_from_atom, extraction_facts, stream_plan)
 
     # Recomputing due to postprocess_stream_plan

@@ -53,6 +53,7 @@ def prune_high_effort_streams(streams, max_effort=INF, **effort_args):
     return low_effort_streams
 
 def optimistic_process_streams(evaluations, streams, complexity_limit=INF, verbose=True, **effort_args):
+    from pybullet_tools.logging import myprint as print
     optimistic_streams = prune_high_effort_streams(streams, **effort_args)
     instantiator = Instantiator(optimistic_streams)
     for evaluation, node in evaluations.items():
@@ -64,8 +65,9 @@ def optimistic_process_streams(evaluations, streams, complexity_limit=INF, verbo
         # TODO: instantiate and solve to avoid repeated work
     exhausted = not instantiator
     if verbose:
+        from bullet.pybullet_planning.pybullet_tools.logging import myprint
         stream_frequencies = Counter(result.external.name for result in results)
-        print('Optimistic streams:', stream_frequencies)
+        myprint('Optimistic streams:', stream_frequencies)
         print('Exhausted optimistic:', exhausted)
     return results, exhausted
 
@@ -220,12 +222,13 @@ def iterative_plan_streams(all_evaluations, externals, optimistic_solve_fn, comp
         num_iterations += 1
         results, exhausted = optimistic_process_streams(complexity_evals, externals, complexity_limit, **effort_args)
 
+        ## ----------- added by Yang to see optimistic streams -----------
         # summarize_results(results, complexity_limit, num_iterations)  ## added by Yang
         # if last_result == len(results):
         #     last_result = len(results)
         #     print('num_iterations', num_iterations, len(results))
         #     continue
-        last_result = len(results)
+        # last_result = len(results)
 
         opt_solutions, final_depth = hierarchical_plan_streams(
             complexity_evals, externals, results, optimistic_solve_fn, complexity_limit,
@@ -236,7 +239,7 @@ def iterative_plan_streams(all_evaluations, externals, optimistic_solve_fn, comp
             return opt_solutions
 
         if final_depth == 0 or (time.time() - start_time > timeout):
-            if (time.time() - start_time > timeout):
+            if time.time() - start_time > timeout:
                 print(f'iterative_plan_streams.timeout = {timeout}')
             status = INFEASIBLE if exhausted else opt_solutions
             return status
@@ -250,7 +253,6 @@ def summarize_results(results, complexity_limit, num_iterations):
     from datetime import datetime
 
     summary = {}
-    print_results = []
     for result in results:
         name = result.name
         obj = result.input_objects[0].value
@@ -259,10 +261,6 @@ def summarize_results(results, complexity_limit, num_iterations):
         if obj not in summary[name]:
             summary[name][obj] = []
         summary[name][obj].append(result)
-
-        # for op in result.output_objects:
-        #     if not isinstance(op, OptimisticObject):
-        #         print(op.__class__.__name__, '  |  ', op)
 
     abstract = {}
     for k, v in summary.items():
