@@ -279,9 +279,11 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
                 optimistic_solve_fn, complexity_limit, max_effort=max_effort)
             for axiom in disabled_axioms:
                 domain.axioms.remove(axiom)
-        print('\n\n\n\nCount Diverse Time: {:.3f}'.format(time.time() - start_diverse))
-        if not isinstance(opt_solutions, bool):
-            print(f'Count Diverse Plans: {len(opt_solutions)}\n\n\n\n')
+
+        if plan_dataset is not None:
+            print('\n\n\n\nCount Diverse Time: {:.3f}'.format(time.time() - start_diverse))
+            if not isinstance(opt_solutions, bool):
+                print(f'Count Diverse Plans: {len(opt_solutions)}\n\n\n\n')
 
         # TODO: sample-pose ahead of sample-grasp
         #print(opt_solutions, not eager_instantiator, not skeleton_queue, not disabled, len(skeleton_queue))
