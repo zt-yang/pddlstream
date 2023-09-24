@@ -197,6 +197,8 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
     # TODO: replan with a better search algorithm after feasible
     # TODO: change the search algorithm and unit costs based on the best cost
     from pybullet_tools.logging import myprint as print
+    debug_label = 'focused |'
+    log_time = debug_label + " sequencing time: {time_sequencing} | sampling time: {time_sampling}"
 
     use_skeletons = (max_skeletons is not None)
     #assert implies(use_skeletons, search_sample_ratio > 0)
@@ -207,7 +209,7 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
     evaluations, goal_exp, domain, externals = parse_problem(
         problem, stream_info=stream_info, constraints=constraints,
         unit_costs=unit_costs, unit_efforts=unit_efforts)
-    print(f'\n\nlog | number of evaluations: {len(evaluations)}\n')
+    print(f'\n\n{debug_label} | number of evaluations: {len(evaluations)}\n')
     if domain_modifier is not None:
         domain = domain_modifier(domain)
     set_all_opt_gen_fn(externals, unique=unique_optimistic, verbose=False)
@@ -248,8 +250,9 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
     timeout = 3*60  ## on Sep 8
     timeout = 6*60  ## on Jan 31
     start_time = time.time()
-    debug_label = 'focused |'
     num_solutions = None
+    time_sequencing = 0
+    time_sampling = 0
     while (not store.is_terminated()) and (num_iterations < max_iterations) and (complexity_limit <= max_complexity):
         num_iterations += 1
         eager_instantiator = Instantiator(eager_externals, evaluations) # Only update after an increase?
@@ -282,9 +285,10 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
                 optimistic_solve_fn, complexity_limit, max_effort=max_effort)
             for axiom in disabled_axioms:
                 domain.axioms.remove(axiom)
-        print('\n\n\n\nCount Diverse Time: {:.3f}'.format(time.time() - start_diverse))
-        if not isinstance(opt_solutions, bool):
-            print(f'Count Diverse Plans: {len(opt_solutions)}\n\n\n\n')
+            time_sequencing += time.time() - start_diverse
+            print('\n\n\n\nCount Diverse Time: {:.3f}'.format(time.time() - start_diverse))
+            if not isinstance(opt_solutions, bool):
+                print(f'Count Diverse Plans: {len(opt_solutions)}\n\n\n\n')
 
         # TODO: sample-pose ahead of sample-grasp
         #print(opt_solutions, not eager_instantiator, not skeleton_queue, not disabled, len(skeleton_queue))
@@ -293,6 +297,7 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
             opt_solutions = []
             if (not eager_instantiator) and (not skeleton_queue) and (not disabled):
                 print(debug_label, 'opt_solutions is INFEASIBLE')
+                print(log_time.format(time_sequencing=time_sequencing, time_sampling=time_sampling))
                 return None
 
         if not opt_solutions:
@@ -327,7 +332,7 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
                         if score > 0.5 and (opt_solution, score) not in filtered:
                             filtered.append((opt_solution, score))
                             print(f'{i + 1}/{len(scored_solutions)}) Score: {score} | Feasible: {feasible} | '
-                                f'Cost: {cost} | Length: {len(action_plan)} | Plan: {action_plan}')
+                                  f'Cost: {cost} | Length: {len(action_plan)} | Plan: {action_plan}')
                 if len(filtered) <= 1:
                     for i, (opt_solution, score) in enumerate(scored_solutions):
                         stream_plan, opt_plan, cost = opt_solution
@@ -352,6 +357,7 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
         # search_sample_ratio = 1
         if evaluation_time < 0:
             print(debug_label, 'evaluation_time < 0')
+            print(log_time.format(time_sequencing=time_sequencing, time_sampling=time_sampling))
             return None
 
         for i, opt_solution in enumerate(opt_solutions):
@@ -405,10 +411,12 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
             if visualize:
                 create_visualizations(evaluations, stream_plan, num_iterations)
 
+            start_sampling = time.time()
             if plan_dataset is not None:
                 solution = None
                 if evaluation_time is not None:
                     solution = satisfy_optimistic_plan(store, domain, opt_solutions=[opt_solution], max_time=evaluation_time)
+                time_sampling += time.time() - start_sampling
                 plan_dataset.append((opt_solution, solution))
                 num_plans = len(plan_dataset)
                 num_solutions = sum((soln is not None) and is_plan(soln[0]) for _, soln in plan_dataset)
@@ -421,6 +429,7 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
                         #write_stream_statistics(externals, verbose=True)
                         #return store.extract_solution() # TODO: return plan_dataset
                         print(debug_label, '!!! num_solutions >= max_solutions !!!')
+                        print(log_time.format(time_sequencing=time_sequencing, time_sampling=time_sampling))
                         return solution
                 continue
 
@@ -464,7 +473,7 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
         #     break
 
         print(f'\n\nfocused.py | time.time() - start_time = {round(time.time() - start_time, 2)} (timeout = {timeout})', )
-        if (time.time() - start_time > timeout):
+        if time.time() - start_time > timeout:
             print('\n\n--------- TIMEOUT --------\n\n')
             break
         # print('(not store.is_terminated())', (not store.is_terminated()))
@@ -484,7 +493,9 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
 
     # from zzz.logging import write_stream_statistics
     write_stream_statistics(externals, verbose=True)
+    print(log_time.format(time_sequencing=time_sequencing, time_sampling=time_sampling))
     return store.extract_solution()
+
 
 solve_focused = solve_abstract # TODO: deprecate solve_focused
 

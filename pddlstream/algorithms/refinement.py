@@ -228,7 +228,7 @@ def iterative_plan_streams(all_evaluations, externals, optimistic_solve_fn, comp
         #     last_result = len(results)
         #     print('num_iterations', num_iterations, len(results))
         #     continue
-        last_result = len(results)
+        # last_result = len(results)
 
         opt_solutions, final_depth = hierarchical_plan_streams(
             complexity_evals, externals, results, optimistic_solve_fn, complexity_limit,
@@ -239,7 +239,7 @@ def iterative_plan_streams(all_evaluations, externals, optimistic_solve_fn, comp
             return opt_solutions
 
         if final_depth == 0 or (time.time() - start_time > timeout):
-            if (time.time() - start_time > timeout):
+            if time.time() - start_time > timeout:
                 print(f'iterative_plan_streams.timeout = {timeout}')
             status = INFEASIBLE if exhausted else opt_solutions
             return status
