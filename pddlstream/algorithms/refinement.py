@@ -210,7 +210,8 @@ def hierarchical_plan_streams(evaluations, externals, results, optimistic_solve_
     return hierarchical_plan_streams(evaluations, externals, next_results, optimistic_solve_fn, complexity_limit,
                                      new_depth, next_constraints, **effort_args)
 
-def iterative_plan_streams(all_evaluations, externals, optimistic_solve_fn, complexity_limit, **effort_args):
+def iterative_plan_streams(all_evaluations, externals, optimistic_solve_fn, complexity_limit, save_streams_txt=False,
+                           **effort_args):
     # Previously didn't have unique optimistic objects that could be constructed at arbitrary depths
     start_time = time.time()
     complexity_evals = {e: n for e, n in all_evaluations.items() if n.complexity <= complexity_limit}
@@ -222,13 +223,14 @@ def iterative_plan_streams(all_evaluations, externals, optimistic_solve_fn, comp
         num_iterations += 1
         results, exhausted = optimistic_process_streams(complexity_evals, externals, complexity_limit, **effort_args)
 
-        ## ----------- added by Yang to see optimistic streams -----------
-        # summarize_results(results, complexity_limit, num_iterations)  ## added by Yang
-        # if last_result == len(results):
-        #     last_result = len(results)
-        #     print('num_iterations', num_iterations, len(results))
-        #     continue
-        # last_result = len(results)
+        # ----------- added by Yang to see optimistic streams -----------
+        if save_streams_txt:
+            summarize_results(results, complexity_limit, num_iterations)  ## added by Yang
+            if last_result == len(results):
+                last_result = len(results)
+                print('num_iterations', num_iterations, len(results))
+                continue
+            last_result = len(results)
 
         opt_solutions, final_depth = hierarchical_plan_streams(
             complexity_evals, externals, results, optimistic_solve_fn, complexity_limit,
