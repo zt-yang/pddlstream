@@ -65,7 +65,7 @@ def optimistic_process_streams(evaluations, streams, complexity_limit=INF, verbo
         # TODO: instantiate and solve to avoid repeated work
     exhausted = not instantiator
     if verbose:
-        from bullet.pybullet_planning.pybullet_tools.logging import myprint
+        from pybullet_planning.pybullet_tools.logging import myprint
         stream_frequencies = Counter(result.external.name for result in results)
         myprint('Optimistic streams:', stream_frequencies)
         print('Exhausted optimistic:', exhausted)
