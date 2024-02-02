@@ -177,6 +177,19 @@ TIGHT_SKELETON = [
     ('move', ['r0', '?q4', WILD, '?q5']),
 ]
 
+TIGHT_SKELETON = [
+    ('pick', {'?b': 'B'}),
+    ('place', {'?b': 'B'}),
+    ('pick', {'?b': 'A'}),
+    ('place', {'?b': 'A'}),
+]
+
+SUBGOALS = [
+    ('Holding', 'r0', 'B'),
+    ('Holding', 'r0', 'A'),
+    # And(('Holding', 'r0', 'B'), ('Holding', 'r0', 'A')),
+]
+
 MUTEXES = [
     #[('kin', '?b1', '?p1', '?q'), ('kin', '?b2', '?p2', '?q')],
     # TODO: add mutexes to reduce search over skeletons
@@ -288,7 +301,7 @@ def main():
                          planner=planner, max_planner_time=10, max_plans=5, hierarchy=hierarchy,
                          max_time=args.max_time, max_iterations=INF, debug=False, verbose=True,
                          unit_costs=args.unit, success_cost=success_cost,
-                         unit_efforts=True, effort_weight=effort_weight,
+                         unit_efforts=True, effort_weight=effort_weight, initial_complexity=3,
                          search_sample_ratio=1, visualize=args.visualize) # TODO: solve_serialized
 
     print_solution(solution)

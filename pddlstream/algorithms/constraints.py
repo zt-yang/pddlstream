@@ -32,7 +32,7 @@ def linear_order(actions):
            | {(len(actions)-1, GOAL_INDEX)}
 
 class PlanConstraints(object):
-    def __init__(self, skeletons=None, groups={}, exact=True, hint=False,
+    def __init__(self, skeletons=None, groups={}, exact=False, hint=False,
                  subgoals=[], subgoal_costs=None, max_cost=INF):
         # TODO: constraint that the skeleton is the tail of the plan
         if skeletons is not None:
@@ -127,9 +127,9 @@ def add_subgoal_constraints(constraints, domain, internal=True):
             domain.actions.append(skip_action)
     return subgoal_facts[-1]
 
-def add_plan_constraints(constraints, domain, evaluations, goal_exp, internal=False):
-    if (constraints is None) or (constraints.skeletons is None):
-        return goal_exp
+def add_skeleton_constraints(constraints, domain, evaluations, internal=False):
+    if constraints.skeletons is None:
+        return None
     import pddl
     # TODO: unify this with the constraint ordering
     # TODO: can constrain to use a plan prefix
@@ -138,12 +138,15 @@ def add_plan_constraints(constraints, domain, evaluations, goal_exp, internal=Fa
     bound_predicate = BOUND_PREDICATE.format(prefix)
     group_predicate = GROUP_PREDICATE.format(prefix)
     order_predicate = ORDER_PREDICATE.format(prefix)
+    add_predicate(domain, make_predicate(order_predicate, ['?num', '?step']))
+
     new_facts = []
     for group in constraints.groups:
         for value in constraints.groups[group]:
             # TODO: could make all constants groups (like an equality group)
             fact = (group_predicate, to_obj(group), to_obj(value))
             new_facts.append(fact)
+
     new_actions = []
     new_goals = []
     for num, skeleton in enumerate(constraints.skeletons):
@@ -197,13 +200,19 @@ def add_plan_constraints(constraints, domain, evaluations, goal_exp, internal=Fa
             #new_action.dump()
         new_goals.append(And(*[order_facts[idx] for idx in incoming_orders[GOAL_INDEX]]))
 
-    add_predicate(domain, make_predicate(order_predicate, ['?num', '?step']))
     if constraints.exact:
         domain.actions[:] = []
     domain.actions.extend(new_actions)
 
-    subgoal_exp = add_subgoal_constraints(constraints, domain, goal_exp)
-    new_goal_exp = And(goal_exp, subgoal_exp, Or(*new_goals))
     for fact in new_facts:
         add_fact(evaluations, fact, result=INTERNAL_EVALUATION)
+    return Or(*new_goals)
+
+def add_plan_constraints(constraints, domain, evaluations, goal_exp):
+    if constraints is None:
+        return goal_exp
+    skeleton_exp = add_skeleton_constraints(constraints, domain, evaluations)
+    subgoal_exp = add_subgoal_constraints(constraints, domain)
+    new_goal_exp = And(goal_exp, skeleton_exp, subgoal_exp)
     return new_goal_exp
+
