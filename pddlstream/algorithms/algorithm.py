@@ -118,7 +118,10 @@ def parse_streams(streams, rules, stream_pddl, procedure_map, procedure_info, us
     for lisp_list in stream_iter:
         name = lisp_list[0] # TODO: refactor at this point
         if name == ':stream':
-            externals = [parse_stream(lisp_list, procedure_map, procedure_info)]
+            stream = parse_stream(lisp_list, procedure_map, procedure_info)
+            if stream is None:
+                continue
+            externals = [stream]
         elif name == ':rule':
             externals = [parse_rule(lisp_list, procedure_map, procedure_info)]
         elif name == ':function':

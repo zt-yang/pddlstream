@@ -579,6 +579,9 @@ def parse_stream(lisp_list, stream_map, stream_info):
     certified = value_from_attribute.get(':certified', None)
     if not (get_formula_operators(certified) <= {AND}):
         raise ValueError('Stream [{}] certified must be a conjunction'.format(name))
+    procedure_fn = get_procedure_fn(stream_map, name)
+    if procedure_fn is None: # TODO: None or False?
+        return None
     return Stream(name, get_procedure_fn(stream_map, name),
                   value_from_attribute.get(':inputs', []),
                   list_from_conjunction(domain),

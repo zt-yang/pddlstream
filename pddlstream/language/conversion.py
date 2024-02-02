@@ -30,6 +30,8 @@ def replace_expression(parent, fn):
     return Fact(name, map(fn, args))
 
 def obj_from_value_expression(parent):
+    if parent is None:
+        return parent
     return replace_expression(parent, lambda o: o if is_parameter(o) else Object.from_value(o))
 
 def value_from_obj_expression(parent):

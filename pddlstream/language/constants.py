@@ -61,12 +61,14 @@ def Output(*args):
 
 
 def And(*expressions):
+    expressions = [exp for exp in expressions if exp is not None]
     if len(expressions) == 1:
        return expressions[0]
     return (AND,) + tuple(expressions)
 
 
 def Or(*expressions):
+    expressions = [exp for exp in expressions if exp is not None]
     if len(expressions) == 1:
        return expressions[0]
     return (OR,) + tuple(expressions)

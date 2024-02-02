@@ -59,6 +59,8 @@ def apply_sas_operator(init, op):
 
 def name_from_action(action, args):
     # TODO: need double parenthesis?
+    if not args:
+        return '(({} ))'.format(action) # TODO: unify
     return '(({}))'.format(' '.join((action,) + args))
 
 def parse_sas_plan(sas_task, plan):

@@ -234,6 +234,8 @@ def parse_problem(domain, problem_pddl):
 
 def fd_from_fact(fact):
     # TODO: convert to evaluation?
+    if isinstance(fact, pddl.conditions.Condition):
+        return fact
     prefix = get_prefix(fact)
     if prefix == NOT:
         return fd_from_fact(fact[1]).negate()
@@ -279,6 +281,8 @@ def fd_from_evaluations(evaluations):
 ##################################################
 
 def parse_goal(goal_exp, domain):
+    if goal_exp is None:
+        return pddl.Truth()
     #try:
     #    pass
     #except SystemExit as e:
@@ -291,7 +295,7 @@ def get_problem(evaluations, goal_exp, domain, unit_costs=False):
     typed_objects = list({make_object(pddl_from_object(obj)) for obj in objects} - set(domain.constants))
     # TODO: this doesn't include =
     init = fd_from_evaluations(evaluations)
-    goal = pddl.Truth() if goal_exp is None else parse_goal(goal_exp, domain)
+    goal = parse_goal(goal_exp, domain)
     #print('{} objects and {} atoms'.format(len(objects), len(init)))
     problem_pddl = None
     if USE_FORBID:

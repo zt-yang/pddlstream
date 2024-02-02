@@ -5,11 +5,12 @@ from copy import deepcopy
 
 from pddlstream.algorithms.common import add_fact, INTERNAL_EVALUATION
 from pddlstream.algorithms.downward import make_predicate, make_preconditions, make_effects, add_predicate, \
-    fd_from_fact
+    fd_from_fact, make_action, parse_goal
 from pddlstream.language.constants import Or, And, is_parameter, Not, str_from_plan, EQ
+from pddlstream.language.conversion import obj_from_value_expression
 from pddlstream.language.object import Object, OptimisticObject
 from pddlstream.utils import find_unique, safe_zip, str_from_object, INF, is_hashable, neighbors_from_orders, \
-    get_ancestors, get_descendants
+    get_ancestors, get_descendants, find
 
 OrderedSkeleton = namedtuple('OrderedSkeleton', ['actions', 'orders']) # TODO: AND/OR tree
 
@@ -20,6 +21,7 @@ ASSIGNED_PREDICATE = '{}assigned'
 BOUND_PREDICATE = '{}bound' # TODO: switch with assigned
 GROUP_PREDICATE = '{}group'
 ORDER_PREDICATE = '{}order'
+SUBGOAL_PREDICATE = '{}subgoal'
 
 GOAL_INDEX = -1
 
@@ -30,7 +32,8 @@ def linear_order(actions):
            | {(len(actions)-1, GOAL_INDEX)}
 
 class PlanConstraints(object):
-    def __init__(self, skeletons=None, groups={}, exact=True, hint=False, max_cost=INF):
+    def __init__(self, skeletons=None, groups={}, exact=True, hint=False,
+                 subgoals=[], subgoal_costs=None, max_cost=INF):
         # TODO: constraint that the skeleton is the tail of the plan
         if skeletons is not None:
             skeletons = [skeleton if isinstance(skeleton, OrderedSkeleton)
@@ -38,6 +41,11 @@ class PlanConstraints(object):
         self.skeletons = skeletons
         self.groups = groups # Could make this a list of lists
         self.exact = exact
+        self.subgoals = subgoals
+        if subgoal_costs is None:
+            subgoal_costs = len(self.subgoals) * [INF]
+        self.subgoal_costs = subgoal_costs
+        assert len(self.subgoals) == len(self.subgoal_costs)
         self.max_cost = max_cost
         #self.max_length = max_length
         #self.hint = hint # TODO: search over skeletons first and then fall back
@@ -72,6 +80,53 @@ def is_constant(arg):
 
 ##################################################
 
+def add_subgoal_constraints(constraints, domain, internal=True):
+    # TODO: to convert existential into parameters
+    # TODO: weighted partial order class
+    # TODO: WILD parameter
+    if not constraints.subgoals:
+        return None
+    prefix = get_internal_prefix(internal)
+    subgoal_predicate = SUBGOAL_PREDICATE.format(prefix)
+    add_predicate(domain, make_predicate(subgoal_predicate, ['?step']))
+
+    subgoal_facts = [(subgoal_predicate, to_obj(f't{step}')) for step in range(len(constraints.subgoals))]
+    for step, subgoal_condition in enumerate(constraints.subgoals):
+        subgoal_fact = subgoal_facts[step]
+        subgoal_cost = constraints.subgoal_costs[step]
+
+        subgoal_condition = obj_from_value_expression(subgoal_condition)
+        subgoal_condition = parse_goal(subgoal_condition, domain) # TODO: mixing types
+
+        preconditions = [Not(subgoal_fact)]
+        effects = [subgoal_fact]
+        if step != 0:
+            prior_fact = subgoal_facts[step-1]
+            preconditions.append(prior_fact)
+            # preconditions.append(Not(prior_fact))
+        action = make_action(
+            # name='{prefix}achieve_subgoal',
+            name=f'{prefix}achieve_subgoal_{step}',
+            parameters=[],
+            preconditions=preconditions + [subgoal_condition],
+            effects=effects,
+            cost=0,
+        )
+        # action.dump()
+        domain.actions.append(action)
+
+        if subgoal_cost < INF:
+            skip_action = make_action(
+                # name='{prefix}skip_subgoal',
+                name=f'{prefix}skip_subgoal_{step}',
+                parameters=[],
+                preconditions=preconditions,
+                effects=effects,
+                cost=subgoal_cost,
+            )
+            domain.actions.append(skip_action)
+    return subgoal_facts[-1]
+
 def add_plan_constraints(constraints, domain, evaluations, goal_exp, internal=False):
     if (constraints is None) or (constraints.skeletons is None):
         return goal_exp
@@ -99,6 +154,12 @@ def add_plan_constraints(constraints, domain, evaluations, goal_exp, internal=Fa
         for step, (name, args) in enumerate(actions):
             # TODO: could also just remove the free parameter from the action
             new_action = deepcopy(find_unique(lambda a: a.name == name, domain.actions))
+            if isinstance(args, dict):
+                for a in args:
+                    param = find(lambda p: p.name == a, new_action.parameters)
+                    if param is None:
+                        raise ValueError('No parameter with name: {}'.format(a))
+                args = [args.get(p.name, WILD) for p in new_action.parameters]
             local_from_global = {a: p.name for a, p in safe_zip(args, new_action.parameters) if is_parameter(a)}
 
             ancestors, descendants = get_ancestors(step, orders), get_descendants(step, orders)
@@ -140,7 +201,9 @@ def add_plan_constraints(constraints, domain, evaluations, goal_exp, internal=Fa
     if constraints.exact:
         domain.actions[:] = []
     domain.actions.extend(new_actions)
-    new_goal_exp = And(goal_exp, Or(*new_goals))
+
+    subgoal_exp = add_subgoal_constraints(constraints, domain, goal_exp)
+    new_goal_exp = And(goal_exp, subgoal_exp, Or(*new_goals))
     for fact in new_facts:
         add_fact(evaluations, fact, result=INTERNAL_EVALUATION)
     return new_goal_exp
