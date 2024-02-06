@@ -84,12 +84,17 @@ def add_subgoal_constraints(constraints, domain, internal=True):
     # TODO: to convert existential into parameters
     # TODO: weighted partial order class
     # TODO: WILD parameter
+    # TODO: compile into actions
+    # TODO: derived predicates
+    import pddl
     if not constraints.subgoals:
         return None
     prefix = get_internal_prefix(internal)
     subgoal_predicate = SUBGOAL_PREDICATE.format(prefix)
     add_predicate(domain, make_predicate(subgoal_predicate, ['?step']))
+    original_actions = list(domain.actions)
 
+    new_effects = []
     subgoal_facts = [(subgoal_predicate, to_obj(f't{step}')) for step in range(len(constraints.subgoals))]
     for step, subgoal_condition in enumerate(constraints.subgoals):
         subgoal_fact = subgoal_facts[step]
@@ -98,33 +103,40 @@ def add_subgoal_constraints(constraints, domain, internal=True):
         subgoal_condition = obj_from_value_expression(subgoal_condition)
         subgoal_condition = parse_goal(subgoal_condition, domain) # TODO: mixing types
 
-        preconditions = [Not(subgoal_fact)]
+        preconditions = [] # Not(subgoal_fact)
         effects = [subgoal_fact]
         if step != 0:
             prior_fact = subgoal_facts[step-1]
             preconditions.append(prior_fact)
             # preconditions.append(Not(prior_fact))
-        action = make_action(
-            # name='{prefix}achieve_subgoal',
-            name=f'{prefix}achieve_subgoal_{step}',
-            parameters=[],
-            preconditions=preconditions + [subgoal_condition],
-            effects=effects,
-            cost=0,
-        )
-        # action.dump()
-        domain.actions.append(action)
 
         if subgoal_cost < INF:
             skip_action = make_action(
                 # name='{prefix}skip_subgoal',
                 name=f'{prefix}skip_subgoal_{step}',
                 parameters=[],
-                preconditions=preconditions,
+                preconditions=preconditions + [Not(subgoal_fact)],
                 effects=effects,
                 cost=subgoal_cost,
             )
             domain.actions.append(skip_action)
+
+        preconditions.append(subgoal_condition)
+        # action = make_action(
+        #     # name='{prefix}achieve_subgoal',
+        #     name=f'{prefix}achieve_subgoal_{step}',
+        #     parameters=[],
+        #     preconditions=preconditions,
+        #     effects=effects,
+        #     cost=0,
+        # )
+        # # action.dump()
+        # # domain.actions.append(action)
+        effect = pddl.Effect(parameters=[], condition=make_preconditions(preconditions), literal=fd_from_fact(subgoal_fact))
+        new_effects.append(effect)
+    for action in original_actions:
+        action.effects.extend(new_effects)
+
     return subgoal_facts[-1]
 
 def add_skeleton_constraints(constraints, domain, evaluations, internal=False):

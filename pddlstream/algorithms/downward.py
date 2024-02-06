@@ -665,10 +665,12 @@ def make_predicate(name, parameters):
 def make_preconditions(preconditions):
     return pddl.Conjunction(list(map(fd_from_fact, preconditions)))
 
+def make_effect(effect):
+    return pddl.Effect(parameters=[], condition=pddl.Truth(), literal=fd_from_fact(effect))
+    # return pddl.SimpleEffect(fd_from_fact(effect))
 
 def make_effects(effects):
-    return [pddl.Effect(parameters=[], condition=pddl.Truth(),
-                        literal=fd_from_fact(fact)) for fact in effects]
+    return list(map(make_effect, effects))
 
 def make_cost(cost):
     if cost is None:
