@@ -94,6 +94,7 @@ def add_subgoal_constraints(constraints, domain, internal=True):
     add_predicate(domain, make_predicate(subgoal_predicate, ['?step']))
     original_actions = list(domain.actions)
 
+    new_conditions = []
     new_effects = []
     subgoal_facts = [(subgoal_predicate, to_obj(f't{step}')) for step in range(len(constraints.subgoals))]
     for step, subgoal_condition in enumerate(constraints.subgoals):
@@ -109,6 +110,7 @@ def add_subgoal_constraints(constraints, domain, internal=True):
             prior_fact = subgoal_facts[step-1]
             preconditions.append(prior_fact)
             # preconditions.append(Not(prior_fact))
+            new_conditions.append(pddl.Disjunction([fd_from_fact(subgoal_condition).negate(), fd_from_fact(prior_fact)]))
 
         if subgoal_cost < INF:
             skip_action = make_action(
@@ -122,6 +124,9 @@ def add_subgoal_constraints(constraints, domain, internal=True):
             domain.actions.append(skip_action)
 
         preconditions.append(subgoal_condition)
+        effect = pddl.Effect(parameters=[], condition=make_preconditions(preconditions), literal=fd_from_fact(subgoal_fact))
+        new_effects.append(effect)
+
         # action = make_action(
         #     # name='{prefix}achieve_subgoal',
         #     name=f'{prefix}achieve_subgoal_{step}',
@@ -130,12 +135,12 @@ def add_subgoal_constraints(constraints, domain, internal=True):
         #     effects=effects,
         #     cost=0,
         # )
-        # # action.dump()
-        # # domain.actions.append(action)
-        effect = pddl.Effect(parameters=[], condition=make_preconditions(preconditions), literal=fd_from_fact(subgoal_fact))
-        new_effects.append(effect)
+        # domain.actions.append(action)
+
     for action in original_actions:
+        action.precondition = pddl.Conjunction([action.precondition] + new_conditions)
         action.effects.extend(new_effects)
+        # action.dump()
 
     return subgoal_facts[-1]
 
