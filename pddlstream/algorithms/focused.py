@@ -3,6 +3,7 @@ from __future__ import print_function
 import copy
 import sys
 import time
+import signal
 
 from pddlstream.algorithms.algorithm import parse_problem, reset_globals
 from pddlstream.algorithms.advanced import enforce_simultaneous, identify_non_producers
@@ -281,15 +282,33 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
             if disabled_axioms:
                 domain.axioms.extend(disabled_axioms)
             print(f'\n\nlog | number of evaluations {num_iterations}: {len(evaluations)}\n')
-            opt_solutions = iterative_plan_streams(evaluations, positive_externals, optimistic_solve_fn,
-                                                   complexity_limit, save_streams_txt=visualize, max_effort=max_effort)
+
+            ################################## function with a timeout #################################
+            stream_planing_timeout = search_kwargs['downward_time'] if 'downward_time' in search_kwargs else 5
+            signal.signal(signal.SIGALRM, timeout_handler)
+            signal.alarm(stream_planing_timeout)
+            try:
+                opt_solutions = iterative_plan_streams(evaluations, positive_externals, optimistic_solve_fn,
+                                                       complexity_limit, save_streams_txt=visualize,
+                                                       max_effort=max_effort)
+            except Exception as ex:
+                # if "TIMEOUT" in ex:
+                #     print("Gotcha!")
+                # else:
+                #     print("We're gonna need a bigger boat!")
+                opt_solutions = INFEASIBLE
+                print(f"\nTimed out iterative_plan_streams() in {stream_planing_timeout} sec\n")
+            finally:
+                signal.alarm(0)
+
+            ###################################################################################
             for axiom in disabled_axioms:
                 domain.axioms.remove(axiom)
 
         time_sequencing += time.time() - start_diverse
 
         if plan_dataset is not None:
-            print('\n\n\n\nCount Diverse Time: {:.3f}'.format(time.time() - start_diverse))
+            print('\n\nCount Diverse Time: {:.3f}'.format(time.time() - start_diverse))
             if not isinstance(opt_solutions, bool):
                 print(f'Count Diverse Plans: {len(opt_solutions)}\n\n\n\n')
 
@@ -561,3 +580,10 @@ def solve_hierarchical(problem, **kwargs):
     """
     return solve_adaptive(problem, max_skeletons=1, search_sample_ratio=INF, # TODO: rename to sample_search_ratio
                           bind=None, max_failures=None, **kwargs)
+
+
+##########################################
+
+def timeout_handler(num, stack):
+    print(f"setting timeout_handler for {num}")
+    raise Exception("TIMEOUT")
