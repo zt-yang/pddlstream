@@ -154,8 +154,8 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
                    max_skeletons=INF, search_sample_ratio=0, bind=True, max_failures=0,
                    unit_efforts=False, max_effort=INF, effort_weight=None, reorder=True,
                    visualize=False, log_failures=True, verbose=True,
-                   fc=None, domain_modifier=None, world=None,
-                   plan_dataset=None, evaluation_time=30, max_solutions=1, **search_kwargs):
+                   fc=None, domain_modifier=None, world=None, plan_dataset=None, max_solutions=1,
+                   evaluation_time=30, stream_planning_timeout=5, total_planning_timeout=360, **search_kwargs):
     """
     Solves a PDDLStream problem by first planning with optimistic stream outputs and then querying streams
     :param problem: a PDDLStream problem
@@ -244,12 +244,6 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
     disabled = set() # Max skeletons after a solution
 
     PRIOR_PLANS.clear() # TODO(caelan): better way of handling this
-    timeout = 20*60 ## before Apr 5
-    timeout = 10*60
-    timeout = 5*60  ## on Jul 26
-    # timeout = 8*60  ## on Sep 8
-    timeout = 3*60  ## on Sep 8
-    timeout = 6*60  ## on Jan 31
     start_time = time.time()
     num_solutions = None
     time_sequencing = 0
@@ -284,9 +278,8 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
             print(f'\n\nlog | number of evaluations {num_iterations}: {len(evaluations)}\n')
 
             ################################## function with a timeout #################################
-            stream_planing_timeout = search_kwargs['downward_time'] if 'downward_time' in search_kwargs else 5
             signal.signal(signal.SIGALRM, timeout_handler)
-            signal.alarm(stream_planing_timeout)
+            signal.alarm(stream_planning_timeout)
             try:
                 opt_solutions = iterative_plan_streams(evaluations, positive_externals, optimistic_solve_fn,
                                                        complexity_limit, save_streams_txt=visualize,
@@ -297,7 +290,7 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
                 # else:
                 #     print("We're gonna need a bigger boat!")
                 opt_solutions = INFEASIBLE
-                print(f"\nTimed out iterative_plan_streams() in {stream_planing_timeout} sec\n")
+                print(f"\nTimed out iterative_plan_streams() in {stream_planning_timeout} sec\n")
             finally:
                 signal.alarm(0)
 
@@ -494,8 +487,9 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
         # if skeleton_queue.process(stream_plan, opt_plan, cost, complexity_limit, allocated_sample_time) is INFEASIBLE:
         #     break
 
-        print(f'\n\nfocused.py | time.time() - start_time = {round(time.time() - start_time, 2)} (timeout = {timeout})', )
-        if time.time() - start_time > timeout:
+        print(f'\n\nfocused.py | time.time() - start_time = {round(time.time() - start_time, 2)} '
+              f'(timeout = {total_planning_timeout})', )
+        if time.time() - start_time > total_planning_timeout:
             print('\n\n--------- TIMEOUT --------\n\n')
             break
         # print('(not store.is_terminated())', (not store.is_terminated()))
