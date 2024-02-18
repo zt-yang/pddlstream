@@ -34,6 +34,8 @@ def diverse_from_task(sas_task, prohibit_actions=True, prohibit_predicates=[],
     assert prohibit_actions or prohibit_predicates
     assert not isinstance(prohibit_actions, dict)
     import sas_tasks
+    from pybullet_tools.logging import myprint as print
+
     # TODO: SAS translation might not be the same across iterations (but action names will)
     prohibit_predicates = list(map(str.lower, prohibit_predicates))
     start_time = time()
