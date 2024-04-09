@@ -53,7 +53,7 @@ def prune_high_effort_streams(streams, max_effort=INF, **effort_args):
     return low_effort_streams
 
 def optimistic_process_streams(evaluations, streams, complexity_limit=INF, verbose=True, **effort_args):
-    from pybullet_tools.logging import myprint as print
+    from pybullet_tools.logging_utils import myprint as print
     optimistic_streams = prune_high_effort_streams(streams, **effort_args)
     instantiator = Instantiator(optimistic_streams)
     for evaluation, node in evaluations.items():
@@ -65,7 +65,7 @@ def optimistic_process_streams(evaluations, streams, complexity_limit=INF, verbo
         # TODO: instantiate and solve to avoid repeated work
     exhausted = not instantiator
     if verbose:
-        from pybullet_planning.pybullet_tools.logging import myprint
+        from pybullet_planning.pybullet_tools.logging_utils import myprint
         stream_frequencies = Counter(result.external.name for result in results)
         myprint('Optimistic streams:', stream_frequencies)
         print('Exhausted optimistic:', exhausted)

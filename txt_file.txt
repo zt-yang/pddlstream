@@ -1,0 +1,15 @@
+
+
+focused | | number of evaluations: 4
+
+
+Iteration: 1 | Complexity: 0 | Skeletons: 0 | Skeleton Queue: 0 | Disabled: 0 | Evaluations: 4 | Eager Calls: 0 | Cost: inf | Search Time: 0.000 | Sample Time: 0.000 | Total Time: 0.000
+
+
+log | number of evaluations 1: 4
+
+
+Timed out iterative_plan_streams() in 5 sec
+
+focused | opt_solutions is INFEASIBLE
+focused | sequencing time: 0.0005002021789550781 | sampling time: 0

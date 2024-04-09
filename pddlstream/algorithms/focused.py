@@ -197,7 +197,7 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
     # TODO: locally optimize only after a solution is identified
     # TODO: replan with a better search algorithm after feasible
     # TODO: change the search algorithm and unit costs based on the best cost
-    from pybullet_tools.logging import myprint as print
+    from pybullet_tools.logging_utils import myprint as print
     debug_label = 'focused |'
     log_time = debug_label + " sequencing time: {time_sequencing} | sampling time: {time_sampling}"
 
@@ -280,11 +280,13 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
             ################################## function with a timeout #################################
             signal.signal(signal.SIGALRM, timeout_handler)
             signal.alarm(stream_planning_timeout)
+            import traceback
             try:
                 opt_solutions = iterative_plan_streams(evaluations, positive_externals, optimistic_solve_fn,
                                                        complexity_limit, save_streams_txt=visualize,
                                                        max_effort=max_effort)
             except Exception as ex:
+                traceback.print_exc()
                 # if "TIMEOUT" in ex:
                 #     print("Gotcha!")
                 # else:
@@ -335,7 +337,7 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
                 action_plans = [opt_plan.action_plan for _, opt_plan, _ in opt_solutions]
                 scores = fc(action_plans)
                 scored_solutions = list(zip(opt_solutions, scores))
-                scored_solutions = [m for m in scored_solutions if m[1] is not 'skip']
+                scored_solutions = [m for m in scored_solutions if m[1] != 'skip']
                 scored_solutions.sort(key=lambda item: item[1], reverse=True)
                 filtered = []
                 for i, (opt_solution, score) in enumerate(scored_solutions):
@@ -412,8 +414,7 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
 
             # --------------------------------------
 
-            print('{}/{}) Stream plan ({}, {}, {:.3f}): {}\n'
-                  'Action plan ({}, {:.3f}): {}\n'.format(
+            print('{}/{}) Stream plan ({}, {}, {:.3f}): {}\nAction plan ({}, {:.3f}): {}\n'.format(
                 i, len(opt_solutions),
                 get_length(stream_plan), num_optimistic, compute_plan_effort(stream_plan), stream_plan_str, ## stream_plan,
                 get_length(action_plan), cost, action_plan_str))  ## , str_from_plan(action_plan)))
