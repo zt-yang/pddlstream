@@ -212,7 +212,7 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
         unit_costs=unit_costs, unit_efforts=unit_efforts)
     print(f'\n\n{debug_label} | number of evaluations: {len(evaluations)}\n')
     if domain_modifier is not None:
-        domain = domain_modifier(domain)
+        domain, externals = domain_modifier((domain, externals))
     set_all_opt_gen_fn(externals, unique=unique_optimistic, verbose=False)
 
     identify_non_producers(externals)
@@ -436,7 +436,8 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
                 plan_dataset.append((opt_solution, solution))
                 num_plans = len(plan_dataset)
                 num_solutions = sum((soln is not None) and is_plan(soln[0]) for _, soln in plan_dataset)
-                print(f'Plans: {num_plans} | Solutions: {num_solutions} | evaluation_time: {evaluation_time} sec\n')
+                print(f'Plans: {num_plans} | Solutions: {num_solutions} | evaluation_time: {evaluation_time} sec '
+                      f'| Actual time: {round(time_sampling, 2)} sec\n')
                 if solution is not None and is_plan(solution[0]):
                     print(f'\n\n----------------------------------------\n\n')
                     print(debug_label, f'Solution ({num_solutions}), {max_solutions - num_solutions} solutions to go')
