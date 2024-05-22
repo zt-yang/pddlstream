@@ -155,7 +155,8 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
                    unit_efforts=False, max_effort=INF, effort_weight=None, reorder=True,
                    visualize=False, log_failures=True, verbose=True,
                    fc=None, domain_modifier=None, world=None, plan_dataset=None, max_solutions=1,
-                   evaluation_time=30, stream_planning_timeout=5, total_planning_timeout=360, **search_kwargs):
+                   evaluation_time=30, stream_planning_timeout=5, total_planning_timeout=360,
+                   max_evaluation_plans=20, **search_kwargs):
     """
     Solves a PDDLStream problem by first planning with optimistic stream outputs and then querying streams
     :param problem: a PDDLStream problem
@@ -435,6 +436,8 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
                 time_sampling += time.time() - start_sampling
                 plan_dataset.append((opt_solution, solution))
                 num_plans = len(plan_dataset)
+                if num_plans > max_evaluation_plans:
+                    return None
                 num_solutions = sum((soln is not None) and is_plan(soln[0]) for _, soln in plan_dataset)
                 print(f'Plans: {num_plans} | Solutions: {num_solutions} | evaluation_time: {evaluation_time} sec '
                       f'| Actual time: {round(time_sampling, 2)} sec\n')

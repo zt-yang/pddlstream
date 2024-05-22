@@ -129,7 +129,7 @@ def safe_apply_mapping(sequence, mapping):
     # TODO: flip arguments order
     for e in sequence:
         if e not in mapping:
-            print(f'{e} not in mapping')
+            print(f'{e} in sequence {sequence} not in mapping {mapping}')
     return tuple(mapping[e] for e in sequence)
 
 
