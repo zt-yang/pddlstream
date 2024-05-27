@@ -18,19 +18,8 @@ EPSILON = 1e-6
 
 Stats = namedtuple('Stats', ['p_success', 'overhead'])
 
-TXT_FILE = os.path.abspath('txt_file.txt')
+from pybullet_tools.logging_utils import myprint
 
-def myprint(text='', *kwargs):
-    string = [str(text)]
-    if len(kwargs) > 0:
-        print(text, kwargs)
-        string.extend([str(n) for n in kwargs])
-    else:
-        print(text)
-    string = ' '.join(string)+'\n'
-    string = string.replace('\t', '    ')
-    with open(TXT_FILE, 'a+') as f:
-        f.writelines(string)
 
 # TODO: ability to "burn in" streams by sampling artificially to get better estimates
 
@@ -163,8 +152,6 @@ def write_stream_statistics(externals, verbose):
     filename = get_data_path(pddl_name)
     ensure_dir(filename)
     write_pickle(filename, data)
-    if verbose:
-        myprint('Wrote:', filename)
 
 ##################################################
 

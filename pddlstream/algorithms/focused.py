@@ -26,7 +26,7 @@ from pddlstream.language.fluent import compile_fluent_streams
 from pddlstream.language.function import Function, Predicate
 from pddlstream.language.optimizer import ComponentStream
 from pddlstream.algorithms.recover_optimizers import combine_optimizers
-from pddlstream.language.statistics import load_stream_statistics, \
+from pddlstream.language.statistics import load_stream_statistics, dump_online_statistics, \
     write_stream_statistics, compute_plan_effort
 from pddlstream.language.stream import Stream, StreamResult, PartialInputs, StreamInfo
 from pddlstream.language.external import never_defer
@@ -446,8 +446,10 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
                     print(debug_label, f'Solution ({num_solutions}), {max_solutions - num_solutions} solutions to go')
                     print(f'\n\n----------------------------------------\n\n')
                     if num_solutions >= max_solutions:
-                        #write_stream_statistics(externals, verbose=True)
+                        # write_stream_statistics(externals, verbose=True)
                         #return store.extract_solution() # TODO: return plan_dataset
+
+                        dump_online_statistics(externals)
                         print(debug_label, '!!! num_solutions >= max_solutions !!!')
                         print(log_time.format(time_sequencing=time_sequencing, time_sampling=time_sampling))
                         return solution

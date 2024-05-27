@@ -112,7 +112,7 @@ def elapsed_time(start_time):
 
 def safe_zip(sequence1, sequence2):
     if len(sequence1) != len(sequence2):
-        print('Lengths {} != {}'.format(len(sequence1), len(sequence2)))
+        print('Lengths {} ({}) != {} ({})'.format(sequence1, len(sequence1), sequence2, len(sequence2)))
     assert len(sequence1) == len(sequence2)
     return zip(sequence1, sequence2)
 
