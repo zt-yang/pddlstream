@@ -31,6 +31,7 @@ def compile_fluent_streams(domain, externals):
     # TODO: allow usage as long as in the same action (e.g. for costs functions)
     # TODO: could create a separate action per control parameter
     if get_domain_predicates(externals) & set(predicate_map):
+        print('\nintersection\n\t'+'\n\t'.join([str(p) for p in get_domain_predicates(externals) & set(predicate_map)]))
         raise RuntimeError('Fluent streams certified facts cannot be domain facts')
 
     # TODO: could make free parameters free
