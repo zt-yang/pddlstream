@@ -156,7 +156,7 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
                    visualize=False, log_failures=True, verbose=True,
                    fc=None, domain_modifier=None, world=None, plan_dataset=None, max_solutions=1,
                    evaluation_time=30, stream_planning_timeout=5, total_planning_timeout=360,
-                   max_evaluation_plans=20, **search_kwargs):
+                   max_evaluation_plans=20, max_complexity_limit=5, **search_kwargs):
     """
     Solves a PDDLStream problem by first planning with optimistic stream outputs and then querying streams
     :param problem: a PDDLStream problem
@@ -320,21 +320,14 @@ def solve_abstract(problem, constraints=PlanConstraints(), stream_info={},
 
         if not opt_solutions:
             print('No plans: increasing complexity from {} to {}'.format(complexity_limit, complexity_limit+complexity_step))
+            if complexity_limit > max_complexity_limit:
+                return None
             complexity_limit += complexity_step
             if not eager_disabled:
                 reenable_disabled(evaluations, domain, disabled)
 
         else:
             if fc is not None:
-                # scored_solutions = []
-                # for i, opt_solution in enumerate(opt_solutions):
-                #     stream_plan, opt_plan, cost = opt_solution
-                #     action_plan = opt_plan.action_plan
-                #     feasible = fc(action_plan)
-                #     if feasible:
-                #         score = feasible # TODO: could use another class method to score
-                #         print(score, action_plan)
-                #         scored_solutions.append((opt_solution, score))
                 action_plans = [opt_plan.action_plan for _, opt_plan, _ in opt_solutions]
                 scores = fc(action_plans)
                 scored_solutions = list(zip(opt_solutions, scores))
