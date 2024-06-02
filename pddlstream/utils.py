@@ -106,6 +106,7 @@ def open_pdf(filename):
 
 ##################################################
 
+
 def elapsed_time(start_time):
     return time.time() - start_time
 
